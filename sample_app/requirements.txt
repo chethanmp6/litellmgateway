@@ -1,0 +1,33 @@
+# LiteLLM Proxy Sample Application Dependencies
+
+# Core dependencies
+openai>=1.40.0              # OpenAI Python client (works with LiteLLM proxy)
+httpx>=0.25.0               # HTTP client for health checks and API calls
+python-dotenv>=1.0.0        # Load environment variables from .env file
+
+# Async support
+asyncio-mqtt>=0.11.1        # For async operations (if needed)
+aiofiles>=23.2.0           # Async file operations (optional)
+
+# Redis caching
+redis>=5.0.0               # Redis client for caching
+
+# CLI dependencies
+click>=8.1.7               # Command line interface framework (alternative to argparse)
+
+# Development dependencies (optional)
+pytest>=7.4.0              # Testing framework
+pytest-asyncio>=0.21.0     # Async testing support
+black>=23.9.0              # Code formatting
+isort>=5.12.0              # Import sorting
+mypy>=1.5.0                # Type checking
+
+# Optional: Enhanced logging and monitoring
+structlog>=23.2.0          # Structured logging
+prometheus-client>=0.17.1  # Metrics collection
+langfuse>=2.0.0            # Langfuse observability and tracing
+
+# Optional: Advanced features
+pydantic>=2.4.0            # Data validation
+tenacity>=8.2.3            # Retry logic
+rich>=13.6.0               # Rich text and beautiful formatting in terminal
