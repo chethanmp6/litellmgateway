@@ -1,0 +1,232 @@
+# LiteLLM Proxy Configuration
+# This file configures the LiteLLM proxy with multiple providers, rate limiting, logging, and more
+
+# Model Configuration - Define available models and their providers
+model_list:
+  # OpenAI Models
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+      max_tokens: 4096
+      temperature: 0.7
+
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+      max_tokens: 4096
+      temperature: 0.7
+
+  - model_name: gpt-3.5-turbo
+    litellm_params:
+      model: openai/gpt-3.5-turbo
+      api_key: os.environ/OPENAI_API_KEY
+      max_tokens: 4096
+      temperature: 0.7
+
+  # Anthropic Models
+  - model_name: claude-3-5-sonnet
+    litellm_params:
+      model: anthropic/claude-3-5-sonnet-20241022
+      api_key: os.environ/ANTHROPIC_API_KEY
+      max_tokens: 4096
+      temperature: 0.7
+
+  - model_name: claude-3-5-haiku
+    litellm_params:
+      model: anthropic/claude-3-5-haiku-20241022
+      api_key: os.environ/ANTHROPIC_API_KEY
+      max_tokens: 4096
+      temperature: 0.7
+
+  # Load Balancing Configuration - Multiple deployments of the same model
+  - model_name: gpt-4o-load-balanced
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+      rpm: 3000  # Requests per minute
+
+  - model_name: gpt-4o-load-balanced
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY_2  # Secondary key for load balancing
+      rpm: 3000
+
+# Router Configuration - Advanced routing and fallback settings
+router_settings:
+  routing_strategy: least-busy  # Options: simple-shuffle, least-busy, usage-based-routing
+  model_group_alias:
+    smart-model: ["gpt-4o", "claude-3-5-sonnet"]  # Fallback group
+    fast-model: ["gpt-4o-mini", "claude-3-5-haiku"]  # Fast response group
+
+  # Fallback configuration
+  fallbacks:
+    - gpt-4o: ["claude-3-5-sonnet", "gpt-4o-mini"]
+    - claude-3-5-sonnet: ["gpt-4o", "claude-3-5-haiku"]
+    - gpt-3.5-turbo: ["gpt-4o-mini", "claude-3-5-haiku"]
+
+  # Model aliases for easier access
+  model_group_alias:
+    openai: ["gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo"]
+    anthropic: ["claude-3-5-sonnet", "claude-3-5-haiku"]
+    premium: ["gpt-4o", "claude-3-5-sonnet"]
+    budget: ["gpt-4o-mini", "claude-3-5-haiku", "gpt-3.5-turbo"]
+
+# Rate Limiting Configuration
+litellm_settings:
+  # Log requests and responses
+  success_callback: ["langfuse"]  # Available: supabase, langsmith, langfuse, wandb
+  failure_callback: ["langfuse"]
+  
+  # Global rate limits
+  rpm: 6000  # Requests per minute
+  tpm: 1000000  # Tokens per minute
+
+  # Per-user rate limits
+  max_budget: 100  # Maximum budget per user per month
+  budget_duration: 30d  # Budget reset period
+
+  # Request timeout settings
+  request_timeout: 600  # 10 minutes timeout
+
+  # Retry configuration
+  num_retries: 3
+  retry_policy: "exponential_backoff"
+
+  # Cache settings
+  cache: true
+  cache_params:
+    type: "redis"
+    host: os.environ/REDIS_HOST
+    port: os.environ/REDIS_PORT
+    password: os.environ/REDIS_PASSWORD
+    namespace: "litellm.caching"
+    ttl: 600  # 10 minutes cache TTL
+    supported_call_types: ["acompletion", "aembedding"]
+
+# General Settings
+general_settings:
+  # Master key for admin access
+  master_key: os.environ/LITELLM_MASTER_KEY
+
+  # Database configuration for logging and analytics
+  database_url: os.environ/DATABASE_URL
+
+  # Admin UI settings
+  ui: true
+  ui_username: admin
+  ui_password: os.environ/LITELLM_UI_PASSWORD
+
+  # CORS settings
+  cors_origins: ["*"]
+
+  # Health check endpoint
+  health_check: true
+
+  # Debug mode
+  debug: true
+
+  # Log level
+  log_level: "DEBUG"  # DEBUG, INFO, WARNING, ERROR
+
+# Logging Configuration
+litellm_params:
+  # Enable detailed logging
+  set_verbose: true
+
+  # Callbacks for logging
+  success_callback: ["langfuse"]
+  failure_callback: ["langfuse"]
+
+# Security and Authentication
+auth:
+  # Enable authentication
+  auth_strategy: "key_auth"  # Options: key_auth, oauth, none
+
+  # Key management
+  api_keys:
+    - key: "sk-1234567890"
+      models: ["gpt-4o", "gpt-4o-mini"]
+      max_budget: 50
+      expires: "2024-12-31"
+      metadata:
+        user: "demo_user"
+        team: "development"
+
+    - key: "sk-0987654321"
+      models: ["claude-3-5-sonnet", "claude-3-5-haiku"]
+      max_budget: 100
+      expires: "2024-12-31"
+      metadata:
+        user: "premium_user"
+        team: "production"
+
+# Content Filtering and Moderation
+content_policy:
+  # Enable content filtering
+  input_filter: true
+  output_filter: true
+
+  # Custom filters
+  filters:
+    - type: "pii_detection"
+      enabled: true
+      action: "block"  # Options: block, warn, log
+
+    - type: "toxicity_detection"
+      enabled: true
+      threshold: 0.8
+      action: "warn"
+
+# Monitoring and Alerting
+monitoring:
+  # Prometheus metrics
+  prometheus_metrics: true
+
+  # Custom metrics
+  custom_metrics:
+    - name: "request_latency"
+      type: "histogram"
+      help: "Request latency in seconds"
+
+    - name: "model_usage"
+      type: "counter"
+      help: "Number of requests per model"
+
+# Environment-specific overrides
+environment_variables:
+  production:
+    debug: false
+    log_level: "WARNING"
+    rpm: 10000
+
+  development:
+    debug: true
+    log_level: "DEBUG"
+    rpm: 1000
+
+# Webhook Configuration
+webhooks:
+  # Success webhooks
+  on_success:
+    - url: "https://your-webhook-url.com/success"
+      headers:
+        Authorization: "Bearer your-token"
+
+  # Failure webhooks
+  on_failure:
+    - url: "https://your-webhook-url.com/failure"
+      headers:
+        Authorization: "Bearer your-token"
+
+# Load Testing and Performance
+performance:
+  # Connection pooling
+  max_connections: 100
+  max_keepalive_connections: 20
+  keepalive_expiry: 5
+
+  # Async settings
+  async_budget_check: true
+  async_fallback: true

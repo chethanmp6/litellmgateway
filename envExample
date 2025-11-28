@@ -1,0 +1,128 @@
+# LiteLLM Proxy Environment Variables
+# Copy this file to .env and fill in your actual values
+
+# =============================================================================
+# SECURITY & AUTHENTICATION
+# =============================================================================
+
+# Master key for admin access to the LiteLLM proxy
+# Generate a secure random key for production use
+LITELLM_MASTER_KEY=sk-litellm-master-key-change-this-in-production
+
+# Admin UI password (if using the built-in UI)
+LITE_UI_USERNAME=admin
+LITELLM_UI_PASSWORD=admin
+
+# =============================================================================
+# LLM PROVIDER API KEYS
+# =============================================================================
+
+# OpenAI API Key
+# Get from: https://platform.openai.com/api-keys
+OPENAI_API_KEY=youropenapikey
+
+# Optional: Secondary OpenAI key for load balancing
+OPENAI_API_KEY_2=sk-your-secondary-openai-api-key-here
+
+# Anthropic API Key
+# Get from: https://console.anthropic.com/
+ANTHROPIC_API_KEY=sk-ant-your-anthropic-api-key-here
+
+# =============================================================================
+# DATABASE CONFIGURATION
+# =============================================================================
+
+# Database URL for storing logs, user data, and analytics
+# SQLite (default, good for development)
+# SQLite (default, good for development)
+# DATABASE_URL=sqlite:///app/logs/litellm.db
+
+# PostgreSQL (recommended for production)
+DATABASE_URL=postgresql://litellm:changeme@postgres:5432/litellm
+
+# PostgreSQL specific settings (when using the postgres service)
+POSTGRES_DB=litellm
+POSTGRES_USER=litellm
+POSTGRES_PASSWORD=changeme
+
+# =============================================================================
+# PROXY CONFIGURATION
+# =============================================================================
+
+# Port for the LiteLLM proxy (default: 4000)
+LITELLM_PORT=4000
+
+# Number of worker processes (adjust based on your server capacity)
+LITELLM_NUM_WORKERS=1
+
+# Log level (DEBUG, INFO, WARNING, ERROR)
+LITELLM_LOG_LEVEL=INFO
+
+# =============================================================================
+# REDIS CONFIGURATION (Optional - for caching)
+# =============================================================================
+
+# Redis connection settings
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=redistest
+
+# =============================================================================
+# MONITORING & ANALYTICS (Optional)
+# =============================================================================
+
+# Langfuse for observability and tracing (optional)
+LANGFUSE_SECRET_KEY = yoursecketkey
+LANGFUSE_PUBLIC_KEY = yourpublickey
+LANGFUSE_BASE_URL = yourbaseurl
+
+# Supabase for logging (optional)
+# SUPABASE_URL=https://your-project.supabase.co
+# SUPABASE_KEY=your-supabase-anon-key
+
+# LangSmith for tracing (optional)
+# LANGCHAIN_TRACING_V2=true
+# LANGCHAIN_ENDPOINT=https://api.smith.langchain.com
+# LANGCHAIN_API_KEY=your-langsmith-api-key
+# LANGCHAIN_PROJECT=your-project-name
+
+# Weights & Biases for experiment tracking (optional)
+# WANDB_API_KEY=your-wandb-api-key
+# WANDB_PROJECT=litellm-proxy
+
+# =============================================================================
+# WEBHOOK CONFIGURATION (Optional)
+# =============================================================================
+
+# Webhook URLs for success/failure notifications
+# WEBHOOK_SUCCESS_URL=https://your-webhook-url.com/success
+# WEBHOOK_FAILURE_URL=https://your-webhook-url.com/failure
+# WEBHOOK_TOKEN=your-webhook-bearer-token
+
+# =============================================================================
+# RATE LIMITING & BUDGET CONTROLS
+# =============================================================================
+
+# Global rate limits
+MAX_BUDGET_PER_USER=100
+BUDGET_DURATION=30d
+
+# Request timeout in seconds
+REQUEST_TIMEOUT=600
+
+# =============================================================================
+# CORS & SECURITY
+# =============================================================================
+
+# Allowed CORS origins (comma-separated)
+CORS_ORIGINS=*
+
+# Enable/disable debug mode (set to false in production)
+DEBUG_MODE=false
+
+# =============================================================================
+# CUSTOM CONFIGURATIONS
+# =============================================================================
+
+# Additional environment variables for custom configurations
+# Add your custom settings here

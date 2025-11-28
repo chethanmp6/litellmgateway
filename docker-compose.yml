@@ -1,0 +1,83 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: litellm-db
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-litellm}
+      - POSTGRES_USER=${POSTGRES_USER:-litellm}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - litellm-network
+    # Always start postgres (remove profile to make it a dependency)
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: litellm-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    command: >
+      sh -c "if [ -n \"$$REDIS_PASSWORD\" ]; then
+        redis-server --requirepass $$REDIS_PASSWORD
+      else
+        redis-server
+      fi"
+    volumes:
+      - redis_data:/data
+    networks:
+      - litellm-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    # Always start redis (remove profile to make it a dependency)
+
+  virtusa-litellm-proxy:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: litellm-proxy
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./config/config.yaml:/app/config.yaml:ro
+      - ./logs:/app/logs
+    environment:
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
+      - LANGFUSE_HOST=${LANGFUSE_BASE_URL}
+    command: ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "1"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-H", "Authorization: Bearer ${LITELLM_MASTER_KEY}", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - litellm-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  litellm-network:
+    driver: bridge

@@ -1,0 +1,3 @@
+@echo off
+echo 🛑 Stopping LiteLLM proxy...
+docker-compose down
