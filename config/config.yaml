@@ -3,75 +3,46 @@
 
 # Model Configuration - Define available models and their providers
 model_list:
-  # OpenAI Models
+  # Azure Models
   - model_name: gpt-4o
     litellm_params:
-      model: openai/gpt-4o
-      api_key: os.environ/OPENAI_API_KEY
+      model: azure/gpt-4o
+      api_key: os.environ/AZURE_OPENAI_API_KEY
+      api_base: os.environ/AZURE_OPENAI_ENDPOINT
+      api_version: os.environ/AZURE_OPENAI_DEPLOYMENT_NAME
       max_tokens: 4096
       temperature: 0.7
 
   - model_name: gpt-4o-mini
     litellm_params:
-      model: openai/gpt-4o-mini
-      api_key: os.environ/OPENAI_API_KEY
+      model: azure/gpt-4o-mini
+      api_key: os.environ/AZURE_OPENAI_API_KEY
+      api_base: os.environ/AZURE_OPENAI_ENDPOINT
+      api_version: os.environ/AZURE_OPENAI_DEPLOYMENT_NAME
       max_tokens: 4096
+      temperature: 0.7     
+
+  #Gemini Models - Google AI Studio
+  - model_name: gemini-2.5-pro
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      api_key: os.environ/GEMINI_API_KEY
+      max_tokens: 8192
       temperature: 0.7
 
-  - model_name: gpt-3.5-turbo
+  - model_name: gemini-2.0-flash-001
     litellm_params:
-      model: openai/gpt-3.5-turbo
-      api_key: os.environ/OPENAI_API_KEY
-      max_tokens: 4096
+      model: gemini/gemini-2.0-flash-001
+      api_key: os.environ/GEMINI_API_KEY
+      max_tokens: 8192
       temperature: 0.7
 
-  # Anthropic Models
-  - model_name: claude-3-5-sonnet
+  - model_name: gemini-2.5-flash
     litellm_params:
-      model: anthropic/claude-3-5-sonnet-20241022
-      api_key: os.environ/ANTHROPIC_API_KEY
-      max_tokens: 4096
+      model: gemini/gemini-2.5-flash
+      api_key: os.environ/GEMINI_API_KEY
+      max_tokens: 8192
       temperature: 0.7
-
-  - model_name: claude-3-5-haiku
-    litellm_params:
-      model: anthropic/claude-3-5-haiku-20241022
-      api_key: os.environ/ANTHROPIC_API_KEY
-      max_tokens: 4096
-      temperature: 0.7
-
-  # Load Balancing Configuration - Multiple deployments of the same model
-  - model_name: gpt-4o-load-balanced
-    litellm_params:
-      model: openai/gpt-4o
-      api_key: os.environ/OPENAI_API_KEY
-      rpm: 3000  # Requests per minute
-
-  - model_name: gpt-4o-load-balanced
-    litellm_params:
-      model: openai/gpt-4o
-      api_key: os.environ/OPENAI_API_KEY_2  # Secondary key for load balancing
-      rpm: 3000
-
-# Router Configuration - Advanced routing and fallback settings
-router_settings:
-  routing_strategy: least-busy  # Options: simple-shuffle, least-busy, usage-based-routing
-  model_group_alias:
-    smart-model: ["gpt-4o", "claude-3-5-sonnet"]  # Fallback group
-    fast-model: ["gpt-4o-mini", "claude-3-5-haiku"]  # Fast response group
-
-  # Fallback configuration
-  fallbacks:
-    - gpt-4o: ["claude-3-5-sonnet", "gpt-4o-mini"]
-    - claude-3-5-sonnet: ["gpt-4o", "claude-3-5-haiku"]
-    - gpt-3.5-turbo: ["gpt-4o-mini", "claude-3-5-haiku"]
-
-  # Model aliases for easier access
-  model_group_alias:
-    openai: ["gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo"]
-    anthropic: ["claude-3-5-sonnet", "claude-3-5-haiku"]
-    premium: ["gpt-4o", "claude-3-5-sonnet"]
-    budget: ["gpt-4o-mini", "claude-3-5-haiku", "gpt-3.5-turbo"]
 
 # Rate Limiting Configuration
 litellm_settings:

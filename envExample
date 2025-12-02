@@ -17,12 +17,24 @@ LITELLM_UI_PASSWORD=admin
 # LLM PROVIDER API KEYS
 # =============================================================================
 
+#Azure OpenAI API Key
+# Get from: https://learn.microsoft.com/en-us/azure/cognitive-services/openai/how-to/set-up-your-azure-openai-resource
+AZURE_OPENAI_API_KEY=
+AZURE_OPENAI_ENDPOINT=
+AZURE_OPENAI_DEPLOYMENT_NAME=
+
+
+#Gemini API Key
+# Get from: https://developers.generativeai.google/cloud-api-keys
+GEMINI_API_KEY= #Working Key
+#GEMINI_API_KEY= #Not working key
+
 # OpenAI API Key
 # Get from: https://platform.openai.com/api-keys
-OPENAI_API_KEY=youropenapikey
+OPENAI_API_KEY=
 
 # Optional: Secondary OpenAI key for load balancing
-OPENAI_API_KEY_2=sk-your-secondary-openai-api-key-here
+OPENAI_API_KEY_2=
 
 # Anthropic API Key
 # Get from: https://console.anthropic.com/
