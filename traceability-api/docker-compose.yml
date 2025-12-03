@@ -1,0 +1,35 @@
+services:
+  traceability-api:
+    build: .
+    container_name: traceability-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://litellm:changeme@host.docker.internal:5432/litellm
+    restart: unless-stopped
+    depends_on:
+      - db_check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Service to wait for database availability
+  db_check:
+    image: postgres:15-alpine
+    command: >
+      sh -c "
+        until pg_isready -h host.docker.internal -p 5432 -U litellm; do
+          echo 'Waiting for database...'
+          sleep 2
+        done
+        echo 'Database is ready!'
+      "
+    depends_on: []
+
+networks:
+  default:
+    external: true
+    name: llmproxy_litellm-network

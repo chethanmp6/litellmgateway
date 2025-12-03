@@ -376,13 +376,152 @@ FROM "LiteLLM_UserTable";
 - 🛡️ **Audit Trail**: Complete request/response history for compliance
 - 📋 **Operational Data**: Health checks, system status, configuration changes
 
-## 🗨️ Session-Based Logging
+## 🗨️ Session-Based Logging & Traceability
 
-Track conversations and user sessions for comprehensive analytics:
+Track conversations and user sessions for comprehensive analytics and session management. The LiteLLM proxy supports rich session-based parameters that get automatically logged to PostgreSQL.
 
-### Step 1: Add Session ID to Requests
+### Supported Session Parameters
 
-**Using Python:**
+When calling the `/chat/completions` API, you can pass the following session-based parameters:
+
+#### Core Session Parameters:
+- **`user`** - User identifier (logged to `"user"` field)
+- **`metadata`** - JSON object containing session information:
+  - `session_id` - Session identifier for grouping conversations
+  - `agent_name` - Name of the AI agent/assistant
+  - `conversation_name` - Name of the conversation thread
+  - Custom metadata fields (department, priority, source, etc.)
+- **`extra_headers`** - Additional headers for tracking
+- **`request_tags`** - Tags for categorizing requests
+
+### Example cURL Requests
+
+#### 1. Basic Session with User and Session ID
+```bash
+curl -X POST "http://localhost:4000/chat/completions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-api-key" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [{"role": "user", "content": "Hello, how are you?"}],
+    "user": "john_doe_123",
+    "metadata": {
+      "session_id": "sess_abc123def456",
+      "agent_name": "CustomerSupportBot",
+      "conversation_name": "Support_Ticket_789"
+    }
+  }'
+```
+
+#### 2. Advanced Session with Multiple Metadata Fields
+```bash
+curl -X POST "http://localhost:4000/chat/completions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-api-key" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [
+      {"role": "system", "content": "You are a helpful customer service agent."},
+      {"role": "user", "content": "I need help with my order"}
+    ],
+    "user": "customer_456",
+    "metadata": {
+      "session_id": "cs_session_20241203_001",
+      "agent_name": "OrderAssistant",
+      "conversation_name": "Order_Help_Chat",
+      "department": "customer_service",
+      "priority": "high",
+      "source": "web_chat",
+      "customer_tier": "premium"
+    },
+    "temperature": 0.7,
+    "max_tokens": 500
+  }'
+```
+
+#### 3. Streaming Session with Request Tags
+```bash
+curl -X POST "http://localhost:4000/chat/completions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-api-key" \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [{"role": "user", "content": "Explain machine learning in simple terms"}],
+    "user": "student_789",
+    "stream": true,
+    "metadata": {
+      "session_id": "edu_session_ml_101",
+      "agent_name": "EducationBot",
+      "conversation_name": "ML_Tutorial_Session",
+      "course_id": "cs101",
+      "lesson": "intro_to_ml"
+    },
+    "extra_headers": {
+      "X-Session-Type": "educational",
+      "X-Content-Category": "tutorial"
+    }
+  }'
+```
+
+#### 4. Function Calling Session
+```bash
+curl -X POST "http://localhost:4000/chat/completions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-api-key" \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [{"role": "user", "content": "What is the weather like in New York?"}],
+    "user": "weather_user_001",
+    "metadata": {
+      "session_id": "weather_session_nyc_001",
+      "agent_name": "WeatherBot",
+      "conversation_name": "NYC_Weather_Query",
+      "location": "New_York_City"
+    },
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_weather",
+          "description": "Get current weather",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {"type": "string"}
+            }
+          }
+        }
+      }
+    ]
+  }'
+```
+
+#### 5. Multi-turn Conversation Session
+```bash
+curl -X POST "http://localhost:4000/chat/completions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-api-key" \
+  -d '{
+    "model": "claude-3-5-haiku",
+    "messages": [
+      {"role": "user", "content": "Hi, I am working on a Python project"},
+      {"role": "assistant", "content": "Great! I would be happy to help you with your Python project. What specific aspect are you working on?"},
+      {"role": "user", "content": "I need help with async/await patterns"}
+    ],
+    "user": "developer_555",
+    "metadata": {
+      "session_id": "dev_session_python_async_001",
+      "agent_name": "CodingAssistant",
+      "conversation_name": "Python_Async_Help",
+      "programming_language": "python",
+      "topic": "async_programming",
+      "experience_level": "intermediate"
+    }
+  }'
+```
+
+### Using Python Client
+
 ```python
 import openai
 import uuid
@@ -398,76 +537,130 @@ client = openai.OpenAI(
 response = client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[{"role": "user", "content": "Hello"}],
-    # Add session ID to metadata
+    user="user_123",
     extra_body={
         "metadata": {
             "session_id": session_id,
-            "user_id": "user123",
-            "conversation_name": "customer_support"
+            "agent_name": "MyAssistant",
+            "conversation_name": "General_Chat",
+            "department": "support",
+            "priority": "medium"
         }
     }
 )
 ```
 
-**Using cURL:**
-```bash
-curl -X POST http://localhost:4000/v1/chat/completions \
-  -H "Authorization: Bearer your-api-key" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "gpt-4o-mini",
-    "messages": [{"role": "user", "content": "Hello"}],
-    "metadata": {
-      "session_id": "sess_123456",
-      "user_id": "user123",
-      "conversation_id": "conv_789"
-    }
-  }'
+### PostgreSQL Session Logging
+
+Your session data gets automatically logged in the `LiteLLM_SpendLogs` table with these key fields:
+
+#### Database Fields That Capture Session Data:
+- **`session_id`** - Direct session identifier (if provided at top level)
+- **`user`** - User identifier from the `user` parameter
+- **`metadata`** - JSON field containing all metadata (agent_name, conversation_name, etc.)
+- **`request_id`** - Unique request identifier
+- **`messages`** - Full conversation messages
+- **`response`** - LLM response content
+- **`model`** - Model used
+- **`startTime`** / **`endTime`** - Request timing
+- **`total_tokens`** / **`prompt_tokens`** / **`completion_tokens`** - Token usage
+- **`spend`** - Cost tracking
+- **`cache_hit`** - Whether response was cached
+- **`request_tags`** - Request tagging
+
+### Query Session Data
+
+**1. View all requests for a specific session:**
+```sql
+SELECT
+    request_id,
+    "startTime",
+    "user",
+    model,
+    total_tokens,
+    spend,
+    metadata->>'agent_name' as agent,
+    metadata->>'conversation_name' as conversation,
+    metadata
+FROM "LiteLLM_SpendLogs"
+WHERE metadata->>'session_id' = 'your_session_id'
+ORDER BY "startTime";
 ```
 
-### Step 2: Query Session Logs
+**2. Session summary with aggregated metrics:**
+```sql
+SELECT
+    metadata->>'session_id' as session_id,
+    metadata->>'agent_name' as agent_name,
+    metadata->>'conversation_name' as conversation_name,
+    "user",
+    COUNT(*) as total_requests,
+    SUM(total_tokens) as total_tokens,
+    SUM(spend) as total_cost,
+    MIN("startTime") as session_start,
+    MAX("startTime") as session_end,
+    ROUND(AVG(EXTRACT(EPOCH FROM ("endTime" - "startTime"))), 2) as avg_response_time_seconds
+FROM "LiteLLM_SpendLogs"
+WHERE metadata->>'session_id' = 'your_session_id'
+GROUP BY metadata->>'session_id', metadata->>'agent_name', metadata->>'conversation_name', "user";
+```
 
-**View all requests for a specific session:**
+**3. View conversation flow for a session:**
 ```sql
 SELECT
     "startTime",
-    model,
-    "user",
-    spend,
-    total_tokens,
-    prompt_tokens,
-    completion_tokens,
-    metadata
+    messages,
+    response
 FROM "LiteLLM_SpendLogs"
 WHERE metadata->>'session_id' = 'your_session_id'
 ORDER BY "startTime" ASC;
 ```
 
-**View conversation flow for a session:**
+**4. Agent performance by session:**
 ```sql
 SELECT
-    "startTime",
-    messages->>'role' as role,
-    messages->>'content' as content,
-    response->'choices'->0->'message'->>'content' as response_content
+    metadata->>'agent_name' as agent_name,
+    COUNT(DISTINCT metadata->>'session_id') as unique_sessions,
+    COUNT(*) as total_requests,
+    SUM(total_tokens) as total_tokens,
+    SUM(spend) as total_cost,
+    AVG(EXTRACT(EPOCH FROM ("endTime" - "startTime"))) as avg_response_time_seconds
 FROM "LiteLLM_SpendLogs"
-WHERE session_id = 'your_session_id'
-ORDER BY "startTime" ASC;
+WHERE metadata->>'agent_name' IS NOT NULL
+GROUP BY metadata->>'agent_name'
+ORDER BY total_requests DESC;
 ```
 
-**Aggregate session statistics:**
+**5. Find all sessions for a user:**
 ```sql
 SELECT
-    session_id,
-    COUNT(*) as total_requests,
-    SUM(spend) as total_cost,
-    SUM(total_tokens) as total_tokens,
+    metadata->>'session_id' as session_id,
+    metadata->>'agent_name' as agent_name,
+    metadata->>'conversation_name' as conversation_name,
+    COUNT(*) as requests_in_session,
+    SUM(spend) as session_cost,
     MIN("startTime") as session_start,
     MAX("startTime") as session_end
 FROM "LiteLLM_SpendLogs"
-WHERE session_id IS NOT NULL
-GROUP BY session_id
+WHERE "user" = 'your_user_id'
+    AND metadata->>'session_id' IS NOT NULL
+GROUP BY metadata->>'session_id', metadata->>'agent_name', metadata->>'conversation_name'
 ORDER BY session_start DESC;
+```
+
+**6. Session activity trends:**
+```sql
+SELECT
+    DATE("startTime") as date,
+    COUNT(DISTINCT metadata->>'session_id') as unique_sessions,
+    COUNT(*) as total_requests,
+    COUNT(DISTINCT "user") as unique_users,
+    SUM(spend) as total_cost
+FROM "LiteLLM_SpendLogs"
+WHERE metadata->>'session_id' IS NOT NULL
+    AND "startTime" >= NOW() - INTERVAL '7 days'
+GROUP BY DATE("startTime")
+ORDER BY date DESC;
 ```
 
 
